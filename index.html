@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Fiber Map</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f1f5f9;
+      color: #172033;
+    }
+    header {
+      background: #123b67;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+    main {
+      padding: 18px;
+      max-width: 700px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px #0001;
+    }
+    input, select, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin: 7px 0;
+      border-radius: 7px;
+      border: 1px solid #ccd5e0;
+      font-size: 16px;
+    }
+    button {
+      background: #1769aa;
+      color: white;
+      border: 0;
+      font-weight: bold;
+    }
+    #map {
+      height: 350px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .point {
+      border-bottom: 1px solid #ddd;
+      padding: 12px 0;
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+  <header>
+    <h2>Network Fiber Map</h2>
+    <p>ফাইবার নেটওয়ার্ক ব্যবস্থাপনা</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h3>নেটওয়ার্ক ম্যাপ</h3>
+      <div id="map"></div>
+    </section>
+
+    <section class="card">
+      <h3>নতুন পয়েন্ট যোগ করুন</h3>
+      <form id="pointForm">
+        <input id="name" placeholder="পয়েন্ট বা বক্সের নাম" required>
+        <select id="type">
+          <option value="box">ফাইবার বক্স</option>
+          <option value="drop">ফাইবার ড্রপ</option>
+          <option value="speed">স্পিড পয়েন্ট</option>
+          <option value="other">অন্যান্য পয়েন্ট</option>
+        </select>
+        <input id="code" placeholder="ফাইবার কোড">
+        <input id="lat" type="number" step="any"
+          placeholder="Latitude" required>
+        <input id="lng" type="number" step="any"
+          placeholder="Longitude" required>
+        <input id="distance" type="number" min="0"
+          placeholder="দূরত্ব (মিটার)">
+        <input id="total" type="number" min="0"
+          placeholder="মোট ক্যাপাসিটি" required>
+        <input id="used" type="number" min="0"
+          placeholder="ব্যবহৃত ক্যাপাসিটি" required>
+        <button type="submit">পয়েন্ট যোগ করুন</button>
+      </form>
+      <p id="status"></p>
+    </section>
+
+    <section class="card">
+      <h3>পয়েন্টের তালিকা</h3>
+      <div id="points">ডেটাবেস সংযোগ করার পর পয়েন্ট দেখা যাবে।</div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([23.8103, 90.4125], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 300);
+
+    // Database connection will be added in the next step.
+  </script>
+</body>
+</html>
