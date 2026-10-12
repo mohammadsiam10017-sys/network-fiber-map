@@ -5,115 +5,572 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Network Fiber Map</title>
+
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
   <style>
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
+      font-family: Arial, sans-serif;
       background: #f1f5f9;
       color: #172033;
     }
+
     header {
-      background: #123b67;
+      background: #123b66;
       color: white;
-      padding: 18px;
+      padding: 16px;
       text-align: center;
     }
+
+    header h2 { margin: 0 0 6px; }
+
     main {
-      padding: 18px;
-      max-width: 700px;
+      max-width: 1100px;
       margin: auto;
+      padding: 12px;
     }
-    .card {
+
+    .panel {
       background: white;
-      padding: 18px;
+      padding: 15px;
       border-radius: 12px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px #0001;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px #00000010;
     }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      border-radius: 10px;
+      z-index: 1;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
     input, select, button {
       width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      margin: 7px 0;
+      padding: 11px;
       border-radius: 7px;
-      border: 1px solid #ccd5e0;
-      font-size: 16px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
     }
+
     button {
+      border: 0;
       background: #1769aa;
       color: white;
-      border: 0;
-      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
     }
-    #map {
-      height: 350px;
-      border-radius: 10px;
-      overflow: hidden;
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
     }
+
+    .secondary { background: #475569; }
+    .danger { background: #b42318; }
+
     .point {
-      border-bottom: 1px solid #ddd;
-      padding: 12px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
       overflow-wrap: anywhere;
     }
+
+    .muted { color: #64748b; font-size: 13px; }
+    #message { overflow-wrap: anywhere; }
+    .hidden { display: none; }
+
+    @media (max-width: 500px) {
+      #map { height: 340px; }
+    }
   </style>
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
+
 <body>
-  <header>
-    <h2>Network Fiber Map</h2>
-    <p>ফাইবার নেটওয়ার্ক ব্যবস্থাপনা</p>
-  </header>
+<header>
+  <h2>🗺️ Network Fiber Map</h2>
+  <div>ফাইবার নেটওয়ার্ক ব্যবস্থাপনা</div>
+</header>
 
-  <main>
-    <section class="card">
-      <h3>নেটওয়ার্ক ম্যাপ</h3>
-      <div id="map"></div>
-    </section>
+<main>
+  <section class="panel">
+    <h3>🔐 অ্যাডমিন লগইন</h3>
+    <p class="muted">
+      পয়েন্ট যোগ বা পরিবর্তন করতে Supabase Auth-এ নিবন্ধিত
+      অ্যাকাউন্ট দিয়ে লগইন করতে হবে।
+    </p>
 
-    <section class="card">
-      <h3>নতুন পয়েন্ট যোগ করুন</h3>
-      <form id="pointForm">
-        <input id="name" placeholder="পয়েন্ট বা বক্সের নাম" required>
-        <select id="type">
-          <option value="box">ফাইবার বক্স</option>
-          <option value="drop">ফাইবার ড্রপ</option>
-          <option value="speed">স্পিড পয়েন্ট</option>
-          <option value="other">অন্যান্য পয়েন্ট</option>
-        </select>
-        <input id="code" placeholder="ফাইবার কোড">
-        <input id="lat" type="number" step="any"
-          placeholder="Latitude" required>
-        <input id="lng" type="number" step="any"
-          placeholder="Longitude" required>
-        <input id="distance" type="number" min="0"
-          placeholder="দূরত্ব (মিটার)">
-        <input id="total" type="number" min="0"
-          placeholder="মোট ক্যাপাসিটি" required>
-        <input id="used" type="number" min="0"
-          placeholder="ব্যবহৃত ক্যাপাসিটি" required>
-        <button type="submit">পয়েন্ট যোগ করুন</button>
-      </form>
-      <p id="status"></p>
-    </section>
+    <form id="authForm">
+      <label for="email">ইমেইল</label>
+      <input id="email" type="email" required
+        autocomplete="username" placeholder="তোমার ইমেইল">
 
-    <section class="card">
-      <h3>পয়েন্টের তালিকা</h3>
-      <div id="points">ডেটাবেস সংযোগ করার পর পয়েন্ট দেখা যাবে।</div>
-    </section>
-  </main>
+      <label for="password" style="margin-top:10px">পাসওয়ার্ড</label>
+      <input id="password" type="password" required
+        autocomplete="current-password" placeholder="পাসওয়ার্ড">
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([23.8103, 90.4125], 12);
+      <button type="submit">লগইন</button>
+    </form>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    <button id="logoutBtn" class="secondary hidden" type="button">
+      লগআউট
+    </button>
+    <p id="authStatus" class="muted">লগইন করা হয়নি</p>
+  </section>
 
+  <section class="panel">
+    <h3>📍 নেটওয়ার্ক ম্যাপ</h3>
+    <p class="muted">
+      নতুন পয়েন্টের অবস্থান ঠিক করতে ম্যাপে ট্যাপ করে
+      অক্ষাংশ ও দ্রাঘিমাংশ নির্বাচন করো।
+    </p>
+    <div id="map"></div>
+    <p id="message" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h3>➕ নতুন ফাইবার পয়েন্ট</h3>
+
+    <form id="pointForm">
+      <div class="form-grid">
+        <div>
+          <label for="name">পয়েন্টের নাম</label>
+          <input id="name" required placeholder="যেমন: Box-01">
+        </div>
+
+        <div>
+          <label for="type">পয়েন্টের ধরন</label>
+          <select id="type" required>
+            <option value="Fiber Box">Fiber Box</option>
+            <option value="Fiber Drop">Fiber Drop</option>
+            <option value="Speed Point">Speed Point</option>
+            <option value="Junction">Junction</option>
+            <option value="Other">অন্যান্য</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="code">ফাইবার কোড</label>
+          <input id="code" placeholder="যেমন: FB-001">
+        </div>
+
+        <div>
+          <label for="lat">Latitude (অক্ষাংশ)</label>
+          <input id="lat" type="number" step="any" required
+            placeholder="23.8103">
+        </div>
+
+        <div>
+          <label for="lng">Longitude (দ্রাঘিমাংশ)</label>
+          <input id="lng" type="number" step="any" required
+            placeholder="90.4125">
+        </div>
+
+        <div>
+          <label for="distance">দূরত্ব (মিটার)</label>
+          <input id="distance" type="number" min="0" step="any"
+            value="0">
+        </div>
+
+        <div>
+          <label for="total">মোট ক্যাপাসিটি</label>
+          <input id="total" type="number" min="0" step="any"
+            value="0">
+        </div>
+
+        <div>
+          <label for="used">ব্যবহৃত ক্যাপাসিটি</label>
+          <input id="used" type="number" min="0" step="any"
+            value="0">
+        </div>
+
+        <div>
+          <label for="status">অবস্থা</label>
+          <select id="status">
+            <option value="Active">চালু</option>
+            <option value="Available">খালি আছে</option>
+            <option value="Maintenance">মেরামত প্রয়োজন</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="saveBtn" type="submit">পয়েন্ট সংরক্ষণ</button>
+      <button id="cancelEditBtn" class="secondary hidden"
+        type="button">এডিট বাতিল</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h3>📋 সব নেটওয়ার্ক পয়েন্ট</h3>
+    <input id="search" placeholder="নাম বা ফাইবার কোড দিয়ে খুঁজুন">
+    <div id="points"><p>ডেটা লোড হচ্ছে...</p></div>
+    <button id="refreshBtn" class="secondary" type="button">
+      ডেটা রিফ্রেশ
+    </button>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://oheqkpbbsvlyjnhnwuag.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_7dRWdAo4L3L-jalnulGlBA_VTYlJo4l";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const TABLE = "network_points";
+
+  const map = L.map("map").setView([23.8103, 90.4125], 12);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+
+  let points = [];
+  let markers = [];
+  let selectedId = null;
+  let currentUser = null;
+  let selectedMarker = null;
+
+  const $ = id => document.getElementById(id);
+
+  function message(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#b42318" : "#1769aa";
+  }
+
+  function num(id) {
+    return Number($(id).value || 0);
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;",
+      '"': "&quot;", "'": "&#39;"
+    })[c]);
+  }
+
+  function field(row, ...names) {
+    for (const name of names) {
+      if (row[name] !== undefined && row[name] !== null) {
+        return row[name];
+      }
+    }
+    return "";
+  }
+
+  function getCoords(row) {
+    return {
+      lat: Number(field(row, "latitude", "lat")),
+      lng: Number(field(row, "longitude", "lng", "lon"))
+    };
+  }
+
+  function clearMarkers() {
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+  }
+
+  function drawMap() {
+    clearMarkers();
+
+    points.forEach(row => {
+      const { lat, lng } = getCoords(row);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(
+        "<b>" + escapeHTML(field(row, "name", "Name")) + "</b><br>" +
+        "কোড: " + escapeHTML(field(row, "code", "fiber_code")) + "<br>" +
+        "ধরন: " + escapeHTML(field(row, "point_type", "type", "Point type"))
+      );
+      markers.push(marker);
+    });
+  }
+
+  function renderPoints() {
+    const q = $("search").value.trim().toLowerCase();
+
+    const filtered = points.filter(row => {
+      const name = String(field(row, "name", "Name")).toLowerCase();
+      const code = String(field(row, "code", "fiber_code")).toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+
+    if (!filtered.length) {
+      $("points").innerHTML = "<p>কোনো পয়েন্ট পাওয়া যায়নি।</p>";
+      return;
+    }
+
+    $("points").innerHTML = filtered.map(row => {
+      const id = field(row, "id");
+      const name = field(row, "name", "Name");
+      const type = field(row, "point_type", "type", "Point type");
+      const code = field(row, "code", "fiber_code");
+      const distance = field(row, "distance", "distance_m");
+      const total = Number(field(row, "total_capacity", "total") || 0);
+      const used = Number(field(row, "used_capacity", "used") || 0);
+      const status = field(row, "status");
+
+      return `
+        <div class="point">
+          <strong>${escapeHTML(name)}</strong>
+          <div>ধরন: ${escapeHTML(type)}</div>
+          <div>ফাইবার কোড: ${escapeHTML(code)}</div>
+          <div>দূরত্ব: ${escapeHTML(distance)} মিটার</div>
+          <div>মোট: ${total} | ব্যবহৃত: ${used} | খালি: ${total - used}</div>
+          <div>অবস্থা: ${escapeHTML(status)}</div>
+          <button type="button" data-action="locate"
+            data-id="${escapeHTML(id)}">ম্যাপে দেখুন</button>
+          <button type="button" class="secondary" data-action="edit"
+            data-id="${escapeHTML(id)}">এডিট</button>
+          <button type="button" class="danger" data-action="delete"
+            data-id="${escapeHTML(id)}">মুছুন</button>
+        </div>`;
+    }).join("");
+  }
+
+  async function loadPoints() {
+    $("points").innerHTML = "<p>ডেটা লোড হচ্ছে...</p>";
+
+    const { data, error } = await db.from(TABLE).select("*").limit(1000);
+
+    if (error) {
+      $("points").textContent =
+        "ডেটা লোড হয়নি: " + error.message +
+        " — টেবিলের কলামের নাম ও Supabase RLS পরীক্ষা করতে হবে।";
+      message("Supabase ডেটা লোড করতে সমস্যা হয়েছে।", true);
+      return;
+    }
+
+    points = data || [];
+    drawMap();
+    renderPoints();
+    message("ডেটা লোড হয়েছে।");
+  }
+
+  function setAuthUI(user) {
+    currentUser = user;
+    $("authStatus").textContent = user
+      ? "লগইন: " + user.email
+      : "লগইন করা হয়নি";
+    $("authForm").classList.toggle("hidden", !!user);
+    $("logoutBtn").classList.toggle("hidden", !user);
+  }
+
+  $("authForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
+
+    if (error) {
+      $("authStatus").textContent = "লগইন ব্যর্থ: " + error.message;
+      return;
+    }
+
+    setAuthUI(data.user);
+    message("লগইন সফল হয়েছে।");
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    const { error } = await db.auth.signOut();
+    if (error) {
+      message(error.message, true);
+      return;
+    }
+    setAuthUI(null);
+    message("লগআউট হয়েছে।");
+  });
+
+  map.on("click", event => {
+    $("lat").value = event.latlng.lat.toFixed(7);
+    $("lng").value = event.latlng.lng.toFixed(7);
+
+    if (selectedMarker) map.removeLayer(selectedMarker);
+    selectedMarker = L.marker(event.latlng).addTo(map)
+      .bindPopup("নির্বাচিত অবস্থান").openPopup();
+  });
+
+  $("pointForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!currentUser) {
+      message("পয়েন্ট সংরক্ষণ করতে আগে অ্যাডমিন লগইন করো।", true);
+      return;
+    }
+
+    const lat = num("lat");
+    const lng = num("lng");
+    const total = num("total");
+    const used = num("used");
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      message("Latitude বা Longitude সঠিক নয়।", true);
+      return;
+    }
+
+    if (total < 0 || used < 0 || used > total) {
+      message("ক্যাপাসিটির সংখ্যা সঠিকভাবে দাও।", true);
+      return;
+    }
+
+    const record = {
+      name: $("name").value.trim(),
+      point_type: $("type").value,
+      code: $("code").value.trim(),
+      latitude: lat,
+      longitude: lng,
+      distance: num("distance"),
+      total_capacity: total,
+      used_capacity: used,
+      status: $("status").value
+    };
+
+    $("saveBtn").disabled = true;
+    message("সংরক্ষণ হচ্ছে...");
+
+    let result;
+
+    if (selectedId !== null) {
+      result = await db.from(TABLE).update(record).eq("id", selectedId);
+    } else {
+      result = await db.from(TABLE).insert(record);
+    }
+
+    $("saveBtn").disabled = false;
+
+    if (result.error) {
+      message("সংরক্ষণ হয়নি: " + result.error.message, true);
+      return;
+    }
+
+    resetForm();
+    message("পয়েন্ট সংরক্ষণ হয়েছে।");
+    await loadPoints();
+  });
+
+  function resetForm() {
+    selectedId = null;
+    $("pointForm").reset();
+    $("total").value = 0;
+    $("used").value = 0;
+    $("distance").value = 0;
+    $("saveBtn").textContent = "পয়েন্ট সংরক্ষণ";
+    $("cancelEditBtn").classList.add("hidden");
+
+    if (selectedMarker) {
+      map.removeLayer(selectedMarker);
+      selectedMarker = null;
+    }
+  }
+
+  $("cancelEditBtn").addEventListener("click", resetForm);
+
+  $("points").addEventListener("click", async event => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+
+    const id = button.dataset.id;
+    const row = points.find(p => String(p.id) === String(id));
+    if (!row) return;
+
+    const { lat, lng } = getCoords(row);
+
+    if (button.dataset.action === "locate") {
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        map.setView([lat, lng], 17);
+        markers.forEach(marker => {
+          if (marker.getLatLng().lat === lat &&
+              marker.getLatLng().lng === lng) {
+            marker.openPopup();
+          }
+        });
+      }
+      return;
+    }
+
+    if (!currentUser) {
+      message("এডিট বা মুছতে আগে অ্যাডমিন লগইন করো।", true);
+      return;
+    }
+
+    if (button.dataset.action === "edit") {
+      selectedId = row.id;
+      $("name").value = field(row, "name", "Name");
+      $("type").value = field(row, "point_type", "type", "Point type");
+      $("code").value = field(row, "code", "fiber_code");
+      $("lat").value = lat;
+      $("lng").value = lng;
+      $("distance").value = field(row, "distance", "distance_m") || 0;
+      $("total").value = field(row, "total_capacity", "total") || 0;
+      $("used").value = field(row, "used_capacity", "used") || 0;
+      $("status").value = field(row, "status") || "Active";
+
+      $("saveBtn").textContent = "পরিবর্তন সংরক্ষণ";
+      $("cancelEditBtn").classList.remove("hidden");
+      $("pointForm").scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    if (button.dataset.action === "delete") {
+      if (!confirm("এই পয়েন্টটি মুছে ফেলতে চাও?")) return;
+
+      const { error } = await db.from(TABLE).delete().eq("id", row.id);
+
+      if (error) {
+        message("মুছতে সমস্যা: " + error.message, true);
+        return;
+      }
+
+      message("পয়েন্ট মুছে ফেলা হয়েছে।");
+      await loadPoints();
+    }
+  });
+
+  $("search").addEventListener("input", renderPoints);
+  $("refreshBtn").addEventListener("click", loadPoints);
+
+  async function init() {
+    const { data, error } = await db.auth.getSession();
+
+    if (error) {
+      message("Auth সমস্যা: " + error.message, true);
+    }
+
+    setAuthUI(data?.session?.user || null);
+    await loadPoints();
     setTimeout(() => map.invalidateSize(), 300);
+  }
 
-    // Database connection will be added in the next step.
-  </script>
+  db.auth.onAuthStateChange((_event, session) => {
+    setAuthUI(session?.user || null);
+  });
+
+  init();
+</script>
 </body>
 </html>
